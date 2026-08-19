@@ -1,4 +1,4 @@
-# gestao — Sistema de Gestão de Campanhas (Dual)
+# gestao - 
 
 Novo sistema de gestão operacional de campanhas da Dual, na subpasta `gestao/`
 do repositório. Frontend do protótipo em [`../prototype`](../prototype); backend
@@ -17,11 +17,11 @@ aqui, seguindo a mesma stack e convenções do sistema existente (`../2026`):
 
 | Etapa | Situação |
 |---|---|
-| Modelagem de dados + DDL (`init.sql`) | ✅ validado no PG16 |
-| API — infra, **auth (JWT)**, criação do 1º admin, dashboard, campanhas, equipe | ✅ pronto |
-| API — CRUD completo de **atividades** (checklist, comentários, mover Kanban) | ✅ pronto (34 casos testados via HTTP) |
-| `docker-compose.yml` (Postgres separado + API + frontend) | ✅ pronto |
-| **Frontend integrado à API** (login por nome+senha, dados reais, sem mock) | ✅ pronto (15 casos e2e no navegador) |
+| Modelagem de dados + DDL (`init.sql`) | validado no PG16 |
+| API — infra, **auth (JWT)**, criação do 1º admin, dashboard, campanhas, equipe | pronto |
+| API — CRUD completo de **atividades** (checklist, comentários, mover Kanban) | pronto (34 casos testados via HTTP) |
+| `docker-compose.yml` (Postgres separado + API + frontend) | pronto |
+| **Frontend integrado à API** (login por nome+senha, dados reais, sem mock) | pronto (15 casos e2e no navegador) |
 
 O sistema completo (login → criar do zero → campanhas, Kanban com drag&drop,
 atividades com checklist/comentários) roda contra o banco real. Toda a interface
