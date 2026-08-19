@@ -1,0 +1,18 @@
+# ═══════════════════════════════════════════════════════════
+# Integração com o Traefik existente do servidor da Dual.
+# O Traefik roda em rede "host" e roteia por labels (mesmo padrão
+# de contatos_api / zapnews / painel). Aqui expomos o gestao-api em
+# gestao.dualcomunicacao.com.br com TLS automático (Let's Encrypt).
+#
+# Este arquivo é aplicado automaticamente pelo docker compose.
+# NÃO use o serviço "proxy" (perfil proxy) neste servidor — o Traefik
+# já ocupa as portas 80/443.
+# ═══════════════════════════════════════════════════════════
+services:
+  api:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gestao.entrypoints=websecure"
+      - "traefik.http.routers.gestao.rule=Host(`gestao.dualcomunicacao.com.br`)"
+      - "traefik.http.routers.gestao.tls.certresolver=letsencrypt"
+      - "traefik.http.services.gestao.loadbalancer.server.port=8000"

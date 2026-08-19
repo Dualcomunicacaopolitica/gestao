@@ -1,0 +1,107 @@
+# ═══════════════════════════════════════════════════════════
+# Sistema de Gestão de Campanhas (Dual) — banco SEPARADO
+# Sobe um PostgreSQL próprio ("gestao") + a API FastAPI.
+# Apenas init.sql roda na primeira inicialização (schema + dados de
+# referência). O banco começa ZERADO: sem usuários e sem campanhas.
+# O primeiro administrador é criado do zero (ver README → "Primeiro acesso").
+# ═══════════════════════════════════════════════════════════
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gestao-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-gestao}
+      POSTGRES_USER: ${DB_USER:-dual}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gestao2026}
+      # role de aplicação (só DML) usada pela API — criada por 02-security.sh
+      APP_DB_USER: ${APP_DB_USER:-gestao_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-troque_esta_senha_app}
+    volumes:
+      - gestao_pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/02-security.sh:/docker-entrypoint-initdb.d/02-security.sh:ro
+    # Sem porta publicada no host: a API acessa pela rede interna do Docker
+    # (DB_HOST=postgres:5432). Para acesso local pontual, use:
+    #   docker compose exec postgres psql -U dual -d gestao
+    # Se precisar expor para uma ferramenta externa, faça APENAS no loopback:
+    #   ports: ["127.0.0.1:${DB_PORT:-5433}:5432"]
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dual} -d ${DB_NAME:-gestao}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    container_name: gestao-api
+    volumes:
+      - ./frontend:/frontend:ro          # SPA servida pela API em /app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-gestao}
+      # A API conecta com a role de aplicação (só DML), não com o dono do banco
+      DB_USER: ${APP_DB_USER:-gestao_app}
+      DB_PASSWORD: ${APP_DB_PASSWORD:-troque_esta_senha_app}
+      FRONTEND_DIR: /frontend
+      JWT_SECRET: ${JWT_SECRET:-troque-este-segredo-em-producao}
+      # Chave do cofre de senhas (vault). MANTENHA ESTÁVEL: se mudar, as senhas
+      # já gravadas ficam ilegíveis. Na falta, o vault usa JWT_SECRET.
+      VAULT_KEY: ${VAULT_KEY:-troque-esta-chave-do-cofre}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-28800}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://gestao.dualcomunicacao.com.br}
+      # Primeiro administrador — login por NOME + senha (sem e-mail).
+      # Criado só se o banco estiver sem usuários. Troque em produção.
+      ADMIN_NOME: ${ADMIN_NOME:-yara}
+      ADMIN_SENHA: ${ADMIN_SENHA:-1234}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8010}:8000"
+
+  # ── Backup automático (pg_dump + retenção) ──────────────────
+  # Gera um dump comprimido a cada BACKUP_INTERVAL e mantém os dos
+  # últimos RETENTION_DAYS em ./backups. Restauração: ./db/restore.sh
+  backup:
+    image: postgres:16-alpine
+    container_name: gestao-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USER:-dual}
+      PGPASSWORD: ${DB_PASSWORD:-gestao2026}
+      PGDATABASE: ${DB_NAME:-gestao}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
+      RETENTION_DAYS: ${RETENTION_DAYS:-14}
+    volumes:
+      - ./backups:/backups
+      - ./db/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+
+  # ── Reverse proxy do subdomínio (opcional) ──────────────────
+  # Liga gestao.dualcomunicacao.com.br → gestao-api. Ative com:
+  #     docker compose --profile proxy up -d --build
+  # Requer as portas 80/443 livres no host. Ver DEPLOY.md.
+  proxy:
+    image: nginx:alpine
+    container_name: gestao-proxy
+    profiles: ["proxy"]
+    depends_on:
+      - api
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/gestao.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+
+volumes:
+  gestao_pgdata:

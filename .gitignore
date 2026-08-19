@@ -1,0 +1,8 @@
+# segredos e dados locais — nunca versionar
+.env
+backups/*.dump
+backups/*.part
+
+# python
+__pycache__/
+*.pyc

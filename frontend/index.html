@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gestão Dual — sistema de gestão operacional de campanhas da Dual Comunicação.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366f1'/%3E%3Ctext x='16' y='23' font-family='Arial' font-size='17' font-weight='bold' fill='white' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E">
+  <title>Gestão Dual · Dual Comunicação</title>
+
+  <!-- Estilos (organizados por camada) -->
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+  <!-- Ponto de montagem da aplicação (SPA com hash routing) -->
+  <div id="app" class="app-shell"></div>
+
+  <!-- ===========================================================
+       Ordem de carregamento (namespace global window.App):
+       1. dados mockados  2. estado  3. ui  4. componentes
+       5. views           6. router  7. bootstrap
+       Sem módulos ES para funcionar via file:// sem servidor.
+       =========================================================== -->
+  <script src="js/api.js"></script>
+  <script src="js/data/cidades.js"></script>
+  <script src="js/data/store.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/views/campaigns.js"></script>
+  <script src="js/views/kanban.js"></script>
+  <script src="js/views/anotacoes.js"></script>
+  <script src="js/views/campaign.js"></script>
+  <script src="js/views/team.js"></script>
+  <script src="js/views/super-cronograma.js"></script>
+  <script src="js/views/settings.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/auth-view.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
